@@ -28,6 +28,7 @@ Repositori ini dibuat khusus untuk mempermudah pemahaman mahasiswa mengenai cara
        - *Heatmap / Contour Fitness Landscape* (hijau = optimum, merah = loss tinggi)
      - **Grafik Konvergensi Real-Time & Tabel Evaluasi per Iterasi**.
      - **Inspektur Partikel**: Klik atau hover partikel pada canvas untuk menginspeksi nilai $C$, $\gamma$, Loss, dan Vektor Kecepatannya.
+     - **Modal Visualisasi Dataset**: Eksplorasi karakteristik dataset Wine Quality UCI (distribusi 6 kelas target, deteksi outlier metode IQR 1.5x, dan statistik 5-angka untuk 11 fitur fisikokimia).
      - **Upload JSON Hasil Python**: Mahasiswa dapat memuat file `pso_results.json` dari hasil running skrip Python asli ke dalam web ini.
 
 2. **`pso_wine_svm.py`** *(Skrip Python Asli)*

@@ -57,7 +57,11 @@
         <span class="text-slate-500">F1-Score: </span>
         <span id="nav-f1" class="text-cyan-600 font-bold">--</span>
       </div>
-      <button id="btn-info-modal" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium flex items-center gap-1.5 transition">
+      <button id="btn-dataset-modal" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium flex items-center gap-1.5 transition shadow-sm" title="Lihat persebaran data, distribusi kelas, dan analisis outlier">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span>Visualisasi Dataset</span>
+      </button>
+      <button id="btn-info-modal" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium flex items-center gap-1.5 transition shadow-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <span>Konsep Rumus</span>
       </button>
@@ -478,6 +482,230 @@
           <strong>Tip Dosen/Mahasiswa:</strong> Cobalah ubah nilai <code class="font-mono">w</code> menjadi tinggi (&gt; 1.0) untuk melihat partikel menyebar keluar ruang, atau ubah <code class="font-mono">c2</code> tinggi untuk melihat partikel berkumpul sangat cepat ke satu titik!
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Dataset Exploration & Outlier Analysis Modal -->
+  <div id="modal-dataset" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white border border-slate-200 rounded-2xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between border-b border-slate-200 pb-3.5 mb-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+              <span class="text-emerald-600">📊</span>
+              Eksplorasi Dataset Red Wine Quality (UCI ML)
+            </h3>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold border border-emerald-200">1.599 Baris &bull; 11 Fitur</span>
+          </div>
+          <p class="text-xs text-slate-500">Karakteristik persebaran data, ketidakseimbangan kelas target, dan deteksi outlier untuk optimasi SVM.</p>
+        </div>
+        <button id="btn-close-dataset-modal" class="text-slate-400 hover:text-slate-800 p-1.5 rounded-lg transition" title="Tutup Modal">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Summary Metric Badges -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-xs font-mono">
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <span class="text-slate-500 block text-[10px] uppercase font-sans">Total Sampel</span>
+          <span class="text-slate-900 font-bold text-sm">1.599 Baris</span>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <span class="text-slate-500 block text-[10px] uppercase font-sans">Kelas Target</span>
+          <span class="text-indigo-600 font-bold text-sm">6 Kelas (3 - 8)</span>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <span class="text-slate-500 block text-[10px] uppercase font-sans">Kelas Mayoritas</span>
+          <span class="text-amber-600 font-bold text-sm">82.5% (Kelas 5 & 6)</span>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <span class="text-slate-500 block text-[10px] uppercase font-sans">Status Outlier</span>
+          <span class="text-rose-600 font-bold text-sm">Ditemukan (IQR)</span>
+        </div>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="flex items-center gap-1.5 border-b border-slate-200 pb-2 mb-4 text-xs">
+        <button id="btn-tab-classes" class="px-3.5 py-1.5 rounded-lg font-semibold bg-emerald-600 text-white shadow-sm transition">
+          1. Distribusi Kelas Target
+        </button>
+        <button id="btn-tab-outliers" class="px-3.5 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+          2. Deteksi Outlier (Metode IQR)
+        </button>
+        <button id="btn-tab-features" class="px-3.5 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+          3. Persebaran 11 Fitur
+        </button>
+      </div>
+
+      <!-- Scrollable Tab Content Container -->
+      <div class="overflow-y-auto custom-scrollbar flex-1 pr-1 text-slate-700 text-xs leading-relaxed space-y-4">
+        
+        <!-- ================= TAB 1: DISTRIBUSI KELAS TARGET ================= -->
+        <div id="tab-content-classes" class="space-y-4">
+          <div class="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 text-emerald-900">
+            <strong>🎯 Analisis Persebaran Kelas Target (`quality`):</strong>
+            Dataset Red Wine Quality memiliki rentang skor kualitas dari <strong>skor 3 (paling rendah)</strong> hingga <strong>skor 8 (paling tinggi)</strong>. Terjadi <em>Class Imbalance</em> (ketidakseimbangan kelas) yang sangat tinggi di mana <strong>82.5% data terkonsentrasi hanya pada kualitas 5 dan 6</strong>.
+          </div>
+
+          <!-- Class Distribution Chart -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            <h4 class="font-bold text-sm text-slate-900 mb-2 flex items-center justify-between">
+              <span>Grafik Sebaran Frekuensi per Kategori Kualitas Wine</span>
+              <span class="text-xs font-normal text-slate-500 font-mono">Total N = 1.599</span>
+            </h4>
+            <div class="relative w-full h-56">
+              <canvas id="dataset-class-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Table & Details of Classes -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[11px] space-y-1.5">
+              <div class="font-bold text-slate-800 font-sans border-b border-slate-200 pb-1">Tabel Rincian Sampel per Kelas:</div>
+              <div class="flex justify-between text-rose-600"><span>Quality 3 (Sangat Rendah):</span><strong>10 sampel (0.63%)</strong></div>
+              <div class="flex justify-between text-orange-600"><span>Quality 4 (Rendah):</span><strong>53 sampel (3.31%)</strong></div>
+              <div class="flex justify-between text-amber-600 font-semibold"><span>Quality 5 (Sedang):</span><strong>681 sampel (42.59%)</strong></div>
+              <div class="flex justify-between text-blue-600 font-semibold"><span>Quality 6 (Sedang):</span><strong>638 sampel (39.90%)</strong></div>
+              <div class="flex justify-between text-emerald-600"><span>Quality 7 (Baik):</span><strong>199 sampel (12.45%)</strong></div>
+              <div class="flex justify-between text-purple-600"><span>Quality 8 (Sangat Baik):</span><strong>18 sampel (1.13%)</strong></div>
+            </div>
+
+            <div class="bg-indigo-50/70 p-3 rounded-xl border border-indigo-200 text-indigo-900 text-xs font-sans space-y-1.5">
+              <div class="font-bold border-b border-indigo-200 pb-1">Dampak pada Kode Machine Learning (`pso_wine_svm.py`):</div>
+              <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                <li><strong>Wajib memakai <code>stratify=y</code>:</strong> Agar sampel kelas minoritas langka (seperti Quality 3 & 8) tidak hilang saat data dipecah menjadi Train dan Test (80%:20%).</li>
+                <li><strong>Wajib memakai skor <code>scoring='f1_weighted'</code>:</strong> Akurasi biasa akan menipu (bias) karena model yang hanya menebak kelas 5 & 6 sudah mendapat akurasi 82.5%, padahal gagal total memprediksi kualitas lainnya!</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= TAB 2: DETEKSI & ANALISIS OUTLIER ================= -->
+        <div id="tab-content-outliers" class="space-y-4 hidden">
+          <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-900">
+            <strong>⚠️ Pertanyaan: "Apakah ada outlier di dataset ini?" &rarr; JAWABAN: YA, BANYAK!</strong><br>
+            Menggunakan metode standar statistik <strong>Tukey's IQR (Interquartile Range, 1.5 &times; IQR)</strong>, ditemukan ratusan sampel outlier yang nilainya jauh melompat di atas batas wajar, terutama pada <em>Residual Sugar</em> (kadar gula), <em>Chlorides</em> (garam), dan <em>Total SO2</em> (pengawet).
+          </div>
+
+          <!-- Outlier Table -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                <tr>
+                  <th class="py-2 px-3">Nama Fitur</th>
+                  <th class="py-2 px-3">Jumlah Outlier</th>
+                  <th class="py-2 px-3">Persentase</th>
+                  <th class="py-2 px-3">Rentang Normal IQR</th>
+                  <th class="py-2 px-3">Nilai Ekstrim Maks</th>
+                  <th class="py-2 px-3">Tingkat Outlier</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 bg-white" id="table-outliers-body">
+                <!-- Dynamically filled by JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Highlight Cards for Top 3 Outlier Features -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div class="text-[10px] text-slate-500 uppercase font-sans">Outlier Terbanyak #1</div>
+              <div class="font-bold text-slate-900 text-xs mt-0.5">Residual Sugar (Gula Sisa)</div>
+              <div class="text-rose-600 font-bold font-mono text-sm mt-1">126 outlier (7.88%)</div>
+              <p class="text-[10px] text-slate-600 mt-1">Rentang normal 0.9 - 3.65 g/dm³, namun ada wine manis ekstrim mencapai <strong>15.5 g/dm³</strong>!</p>
+            </div>
+
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div class="text-[10px] text-slate-500 uppercase font-sans">Outlier Terbanyak #2</div>
+              <div class="font-bold text-slate-900 text-xs mt-0.5">Chlorides (Kadar Garam)</div>
+              <div class="text-rose-600 font-bold font-mono text-sm mt-1">112 outlier (7.00%)</div>
+              <p class="text-[10px] text-slate-600 mt-1">Mayoritas wine berada di 0.07 - 0.09 g/dm³, namun ada botol dengan kadar garam mencapai <strong>0.611 g/dm³</strong>.</p>
+            </div>
+
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div class="text-[10px] text-slate-500 uppercase font-sans">Outlier Terbanyak #3</div>
+              <div class="font-bold text-slate-900 text-xs mt-0.5">Total Sulfur Dioxide</div>
+              <div class="text-rose-600 font-bold font-mono text-sm mt-1">55 outlier (3.44%)</div>
+              <p class="text-[10px] text-slate-600 mt-1">Rentang normal di bawah 122 mg/dm³, namun terdapat sampel dengan pengawet ekstrim hingga <strong>289 mg/dm³</strong>.</p>
+            </div>
+          </div>
+
+          <!-- Scientific Insight Box on why PSO tunes C & Gamma -->
+          <div class="bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-amber-900 text-xs space-y-1">
+            <strong>💡 Mengapa SVM dan PSO Sangat Membutuhkan Penanganan Outlier?</strong>
+            <ul class="list-disc pl-4 space-y-1 text-[11px] text-amber-800 mt-1">
+              <li><strong>Standarisasi (StandardScaler):</strong> Karena rentang nilai fitur berbeda sangat jauh (Total SO2 skala ratusan vs Chlorides nol koma), standarisasi z-score wajib dilakukan agar outlier tidak mendistorsi perhitungan jarak kernel RBF.</li>
+              <li><strong>Peran Parameter C pada SVM:</strong> Nilai <code>C</code> adalah penalti kesalahan klasifikasi (*soft margin*). Jika C terlalu besar, model memaksakan margin memisahkan seluruh outlier (rawan *overfitting*). Algoritma PSO bertugas mencari kompromi nilai C dan Gamma terbaik agar model toleran terhadap outlier tanpa mengorbankan akurasi.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ================= TAB 3: STATISTIK & PERSEBARAN 11 FITUR ================= -->
+        <div id="tab-content-features" class="space-y-4 hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div>
+              <label for="dataset-feature-select" class="font-bold text-slate-800 text-xs block mb-1">Pilih Fitur Fisikokimia untuk Dianalisis:</label>
+              <p class="text-[11px] text-slate-500">Lihat ringkasan 5 angka statistik dan tren korelasi nilai rata-ratanya terhadap kualitas wine.</p>
+            </div>
+            <select id="dataset-feature-select" class="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-indigo-500 shadow-sm">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <!-- 5-Number Summary Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center font-mono">
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-500 block font-sans">Min</span>
+              <span id="stat-min" class="font-bold text-slate-800 text-xs">--</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-500 block font-sans">Q1 (25%)</span>
+              <span id="stat-q1" class="font-bold text-slate-800 text-xs">--</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-500 block font-sans">Median (Q2)</span>
+              <span id="stat-median" class="font-bold text-indigo-600 text-xs">--</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-500 block font-sans">Mean (&mu;)</span>
+              <span id="stat-mean" class="font-bold text-emerald-600 text-xs">--</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-500 block font-sans">Q3 (75%)</span>
+              <span id="stat-q3" class="font-bold text-slate-800 text-xs">--</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-500 block font-sans">Max</span>
+              <span id="stat-max" class="font-bold text-slate-800 text-xs">--</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span class="text-[10px] text-slate-500 block font-sans">Std Dev (&sigma;)</span>
+              <span id="stat-std" class="font-bold text-slate-600 text-xs">--</span>
+            </div>
+          </div>
+
+          <!-- Feature Trend by Quality Chart -->
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            <h4 class="font-bold text-sm text-slate-900 mb-2 flex items-center justify-between">
+              <span id="feature-chart-title">Nilai Rata-rata Fitur per Tingkat Kualitas Wine</span>
+              <span id="feature-unit-badge" class="text-xs font-normal text-slate-500 font-mono">--</span>
+            </h4>
+            <div class="relative w-full h-52">
+              <canvas id="dataset-feature-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Trend Explanation Card -->
+          <div id="feature-trend-box" class="bg-blue-50/70 border border-blue-200 rounded-xl p-3 text-blue-900 text-xs">
+            <strong>Analisis Tren Fitur:</strong>
+            <span id="feature-trend-text">--</span>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   </div>
 
@@ -1470,6 +1698,312 @@
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.classList.add('hidden');
     });
+
+    // --- 9. DATASET EXPLORATION & OUTLIER MODAL ---
+    const WINE_DATASET = {
+      classes: [
+        { quality: 3, count: 10, pct: 0.63, label: 'Skor 3', color: '#ef4444' },
+        { quality: 4, count: 53, pct: 3.31, label: 'Skor 4', color: '#f97316' },
+        { quality: 5, count: 681, pct: 42.59, label: 'Skor 5', color: '#eab308' },
+        { quality: 6, count: 638, pct: 39.90, label: 'Skor 6', color: '#3b82f6' },
+        { quality: 7, count: 199, pct: 12.45, label: 'Skor 7', color: '#10b981' },
+        { quality: 8, count: 18, pct: 1.13, label: 'Skor 8', color: '#8b5cf6' }
+      ],
+      outliers: [
+        { key: "residual_sugar", name: "Residual Sugar (Gula Sisa)", count: 126, pct: 7.88, normal: "[0.90 - 3.65]", max: "15.50 g/dm³", level: "Tinggi" },
+        { key: "chlorides", name: "Chlorides (Kadar Garam)", count: 112, pct: 7.00, normal: "[0.04 - 0.12]", max: "0.611 g/dm³", level: "Tinggi" },
+        { key: "sulphates", name: "Sulphates (Kalium Sulfat)", count: 59, pct: 3.69, normal: "[0.33 - 0.94]", max: "2.00 g/dm³", level: "Sedang" },
+        { key: "total_sulfur_dioxide", name: "Total Sulfur Dioxide", count: 55, pct: 3.44, normal: "[6.0 - 122.0]", max: "289.0 mg/dm³", level: "Sedang" },
+        { key: "fixed_acidity", name: "Fixed Acidity (Asam Tartarat)", count: 49, pct: 3.06, normal: "[4.6 - 12.35]", max: "15.90 g/dm³", level: "Sedang" },
+        { key: "density", name: "Density (Massa Jenis)", count: 45, pct: 2.81, normal: "[0.992 - 1.001]", max: "1.0037 g/cm³", level: "Sedang" },
+        { key: "ph", name: "pH (Tingkat Keasaman)", count: 35, pct: 2.19, normal: "[2.92 - 3.68]", max: "4.01 pH", level: "Rendah" },
+        { key: "free_sulfur_dioxide", name: "Free Sulfur Dioxide", count: 30, pct: 1.88, normal: "[1.0 - 42.0]", max: "72.0 mg/dm³", level: "Rendah" },
+        { key: "volatile_acidity", name: "Volatile Acidity (Asam Cuka)", count: 19, pct: 1.19, normal: "[0.12 - 1.02]", max: "1.58 g/dm³", level: "Rendah" },
+        { key: "alcohol", name: "Alcohol (Kadar Alkohol)", count: 13, pct: 0.81, normal: "[8.4 - 13.5]", max: "14.90 % vol", level: "Sangat Rendah" },
+        { key: "citric_acid", name: "Citric Acid (Asam Sitrat)", count: 1, pct: 0.06, normal: "[0.00 - 0.92]", max: "1.00 g/dm³", level: "Nol" }
+      ],
+      features: {
+        alcohol: {
+          name: "Alcohol (% vol)",
+          unit: "% volume alkohol",
+          min: "8.40%", q1: "9.50%", median: "10.20%", mean: "10.42%", q3: "11.10%", max: "14.90%", std: "1.07",
+          avgByQuality: [9.96, 10.27, 9.90, 10.63, 11.47, 12.09],
+          trend: "Korelasi positif paling kuat (+0.48) terhadap kualitas wine! Semakin tinggi persentase alkohol (terutama di atas 11.5%), skor kualitas wine melonjak ke kategori 7 dan 8."
+        },
+        volatile_acidity: {
+          name: "Volatile Acidity (Asam Cuka)",
+          unit: "g(acetic acid)/dm³",
+          min: "0.12", q1: "0.39", median: "0.52", mean: "0.53", q3: "0.64", max: "1.58", std: "0.18",
+          avgByQuality: [0.88, 0.69, 0.58, 0.50, 0.40, 0.42],
+          trend: "Korelasi negatif paling kuat (-0.39)! Kadar asam asetat yang tinggi membuat wine beraroma menyengat seperti cuka, sehingga langsung menurunkan kualitas ke skor 3-4."
+        },
+        citric_acid: {
+          name: "Citric Acid (Asam Sitrat)",
+          unit: "g/dm³",
+          min: "0.00", q1: "0.09", median: "0.26", mean: "0.27", q3: "0.42", max: "1.00", std: "0.19",
+          avgByQuality: [0.17, 0.17, 0.24, 0.27, 0.38, 0.39],
+          trend: "Korelasi positif (+0.23). Asam sitrat memberikan rasa 'kesegaran' buah (crispness) pada anggur merah berkualitas baik."
+        },
+        sulphates: {
+          name: "Sulphates (Kalium Sulfat)",
+          unit: "g(potassium sulphate)/dm³",
+          min: "0.33", q1: "0.55", median: "0.62", mean: "0.66", q3: "0.73", max: "2.00", std: "0.17",
+          avgByQuality: [0.57, 0.60, 0.62, 0.68, 0.74, 0.77],
+          trend: "Korelasi positif (+0.25). Sulfat bertindak sebagai zat aditif antioksidan dan antimikroba yang menjaga aroma buah anggur tetap terjaga."
+        },
+        residual_sugar: {
+          name: "Residual Sugar (Gula Sisa)",
+          unit: "g/dm³",
+          min: "0.90", q1: "1.90", median: "2.20", mean: "2.54", q3: "2.60", max: "15.50", std: "1.41",
+          avgByQuality: [2.63, 2.69, 2.53, 2.48, 2.72, 2.58],
+          trend: "Memiliki jumlah outlier terbanyak (126 sampel, hingga 15.5 g/dm³), namun nilai rata-ratanya hampir sama di semua kelas (~2.5 g/dm³), sehingga kadar gula bukan pembeda utama kualitas."
+        },
+        chlorides: {
+          name: "Chlorides (Kadar Garam)",
+          unit: "g(sodium chloride)/dm³",
+          min: "0.012", q1: "0.070", median: "0.079", mean: "0.087", q3: "0.090", max: "0.611", std: "0.047",
+          avgByQuality: [0.122, 0.091, 0.093, 0.085, 0.077, 0.068],
+          trend: "Korelasi negatif (-0.13). Wine kualitas tinggi (skor 7 & 8) memiliki kadar garam yang jauh lebih rendah (< 0.077 g/dm³)."
+        },
+        total_sulfur_dioxide: {
+          name: "Total Sulfur Dioxide",
+          unit: "mg/dm³",
+          min: "6.0", q1: "22.0", median: "38.0", mean: "46.47", q3: "62.0", max: "289.0", std: "32.90",
+          avgByQuality: [24.9, 36.3, 56.5, 40.9, 35.0, 34.4],
+          trend: "Memiliki outlier ekstrim hingga 289 mg/dm³. Nilai sedang (sekitar 35 mg/dm³) paling optimal untuk wine kualitas tinggi agar aroma belerang tidak tercium."
+        },
+        free_sulfur_dioxide: {
+          name: "Free Sulfur Dioxide",
+          unit: "mg/dm³",
+          min: "1.0", q1: "7.0", median: "14.0", mean: "15.87", q3: "21.0", max: "72.0", std: "10.46",
+          avgByQuality: [11.0, 12.2, 16.9, 15.7, 14.0, 13.3],
+          trend: "Bentuk gas SO2 bebas yang larut. Berperan mencegah oksidasi wine selama penyimpanan dalam botol."
+        },
+        density: {
+          name: "Density (Massa Jenis)",
+          unit: "g/cm³",
+          min: "0.9901", q1: "0.9956", median: "0.9968", mean: "0.9967", q3: "0.9978", max: "1.0037", std: "0.0019",
+          avgByQuality: [0.9975, 0.9965, 0.9971, 0.9966, 0.9961, 0.9952],
+          trend: "Wine berkualitas lebih tinggi memiliki densitas lebih rendah karena kadar alkohol tinggi yang memiliki berat jenis lebih ringan dari air."
+        },
+        ph: {
+          name: "pH (Keasaman)",
+          unit: "skala pH",
+          min: "2.74", q1: "3.21", median: "3.31", mean: "3.31", q3: "3.40", max: "4.01", std: "0.15",
+          avgByQuality: [3.40, 3.38, 3.31, 3.32, 3.29, 3.27],
+          trend: "Mayoritas wine berada pada pH 3.2 - 3.4. Wine kualitas tinggi sedikit lebih asam (pH lebih rendah) untuk menjaga keseimbangan rasa segar."
+        },
+        fixed_acidity: {
+          name: "Fixed Acidity (Asam Tartarat)",
+          unit: "g(tartaric acid)/dm³",
+          min: "4.60", q1: "7.10", median: "7.90", mean: "8.32", q3: "9.20", max: "15.90", std: "1.74",
+          avgByQuality: [8.36, 7.78, 8.17, 8.35, 8.87, 8.57],
+          trend: "Asam utama non-volatil pada anggur. Wine kualitas baik cenderung memiliki fixed acidity di atas 8.5 g/dm³."
+        }
+      }
+    };
+
+    const datasetModal = document.getElementById('modal-dataset');
+    const btnDatasetModal = document.getElementById('btn-dataset-modal');
+    const btnCloseDatasetModal = document.getElementById('btn-close-dataset-modal');
+
+    btnDatasetModal.addEventListener('click', () => {
+      datasetModal.classList.remove('hidden');
+      initDatasetModal();
+    });
+
+    btnCloseDatasetModal.addEventListener('click', () => {
+      datasetModal.classList.add('hidden');
+    });
+
+    datasetModal.addEventListener('click', (e) => {
+      if (e.target === datasetModal) datasetModal.classList.add('hidden');
+    });
+
+    const tabClassesBtn = document.getElementById('btn-tab-classes');
+    const tabOutliersBtn = document.getElementById('btn-tab-outliers');
+    const tabFeaturesBtn = document.getElementById('btn-tab-features');
+
+    const tabClassesContent = document.getElementById('tab-content-classes');
+    const tabOutliersContent = document.getElementById('tab-content-outliers');
+    const tabFeaturesContent = document.getElementById('tab-content-features');
+
+    function switchDatasetTab(activeTab) {
+      const activeClass = 'px-3.5 py-1.5 rounded-lg font-semibold bg-emerald-600 text-white shadow-sm transition';
+      const inactiveClass = 'px-3.5 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition';
+
+      tabClassesBtn.className = activeTab === 'classes' ? activeClass : inactiveClass;
+      tabOutliersBtn.className = activeTab === 'outliers' ? activeClass : inactiveClass;
+      tabFeaturesBtn.className = activeTab === 'features' ? activeClass : inactiveClass;
+
+      tabClassesContent.classList.toggle('hidden', activeTab !== 'classes');
+      tabOutliersContent.classList.toggle('hidden', activeTab !== 'outliers');
+      tabFeaturesContent.classList.toggle('hidden', activeTab !== 'features');
+
+      if (activeTab === 'classes' && datasetClassChart) datasetClassChart.resize();
+      if (activeTab === 'features' && datasetFeatureChart) datasetFeatureChart.resize();
+    }
+
+    tabClassesBtn.addEventListener('click', () => switchDatasetTab('classes'));
+    tabOutliersBtn.addEventListener('click', () => switchDatasetTab('outliers'));
+    tabFeaturesBtn.addEventListener('click', () => switchDatasetTab('features'));
+
+    let datasetClassChart = null;
+    let datasetFeatureChart = null;
+    let datasetModalInitialized = false;
+
+    function initDatasetModal() {
+      if (datasetModalInitialized) return;
+      datasetModalInitialized = true;
+
+      // 1. Populate Outlier Table
+      const outlierTbody = document.getElementById('table-outliers-body');
+      outlierTbody.innerHTML = '';
+      WINE_DATASET.outliers.forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        const levelBadge = item.level === 'Tinggi' 
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">Tinggi (&ge; 7%)</span>'
+          : item.level === 'Sedang'
+            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">Sedang (2 - 5%)</span>'
+            : item.level === 'Nol'
+              ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Nol / 1 data</span>'
+              : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">Rendah (&lt; 2.5%)</span>';
+
+        tr.innerHTML = `
+          <td class="py-2 px-3 font-semibold text-slate-800 font-sans">${item.name}</td>
+          <td class="py-2 px-3 text-rose-600 font-bold">${item.count} sampel</td>
+          <td class="py-2 px-3 font-bold text-slate-700">${item.pct}%</td>
+          <td class="py-2 px-3 text-slate-600">${item.normal}</td>
+          <td class="py-2 px-3 text-rose-700 font-bold">${item.max}</td>
+          <td class="py-2 px-3">${levelBadge}</td>
+        `;
+        outlierTbody.appendChild(tr);
+      });
+
+      // 2. Render Class Distribution Chart
+      const classCtx = document.getElementById('dataset-class-chart').getContext('2d');
+      datasetClassChart = new Chart(classCtx, {
+        type: 'bar',
+        data: {
+          labels: WINE_DATASET.classes.map(c => `Quality ${c.quality} (${c.pct}%)`),
+          datasets: [{
+            label: 'Jumlah Sampel Wine',
+            data: WINE_DATASET.classes.map(c => c.count),
+            backgroundColor: WINE_DATASET.classes.map(c => c.color),
+            borderRadius: 6,
+            borderWidth: 1,
+            borderColor: '#cbd5e1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const c = WINE_DATASET.classes[ctx.dataIndex];
+                  return `Jumlah: ${c.count} sampel (${c.pct}% dari total 1.599)`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#475569', font: { family: 'Inter', size: 11, weight: '600' } }
+            },
+            y: {
+              title: { display: true, text: 'Frekuensi Sampel', color: '#64748b', font: { size: 10 } },
+              grid: { color: '#e2e8f0' },
+              ticks: { color: '#475569', font: { family: 'JetBrains Mono' } }
+            }
+          }
+        }
+      });
+
+      // 3. Populate Feature Dropdown in Tab 3
+      const featureSelect = document.getElementById('dataset-feature-select');
+      featureSelect.innerHTML = '';
+      for (const [key, feat] of Object.entries(WINE_DATASET.features)) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = feat.name;
+        featureSelect.appendChild(opt);
+      }
+
+      // Feature Chart Initialization
+      const featCtx = document.getElementById('dataset-feature-chart').getContext('2d');
+      datasetFeatureChart = new Chart(featCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Quality 3', 'Quality 4', 'Quality 5', 'Quality 6', 'Quality 7', 'Quality 8'],
+          datasets: [{
+            label: 'Nilai Rata-rata',
+            data: [],
+            backgroundColor: '#0284c7',
+            borderRadius: 6,
+            borderWidth: 1,
+            borderColor: '#0369a1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return `Rata-rata: ${ctx.parsed.y}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#475569', font: { family: 'Inter', size: 11, weight: '600' } }
+            },
+            y: {
+              grid: { color: '#e2e8f0' },
+              ticks: { color: '#475569', font: { family: 'JetBrains Mono' } }
+            }
+          }
+        }
+      });
+
+      featureSelect.addEventListener('change', (e) => {
+        renderFeatureStats(e.target.value);
+      });
+
+      renderFeatureStats('alcohol');
+    }
+
+    function renderFeatureStats(key) {
+      const feat = WINE_DATASET.features[key];
+      if (!feat) return;
+
+      document.getElementById('stat-min').textContent = feat.min;
+      document.getElementById('stat-q1').textContent = feat.q1;
+      document.getElementById('stat-median').textContent = feat.median;
+      document.getElementById('stat-mean').textContent = feat.mean;
+      document.getElementById('stat-q3').textContent = feat.q3;
+      document.getElementById('stat-max').textContent = feat.max;
+      document.getElementById('stat-std').textContent = feat.std;
+
+      document.getElementById('feature-chart-title').textContent = `Nilai Rata-rata ${feat.name} per Tingkat Kualitas`;
+      document.getElementById('feature-unit-badge').textContent = `Satuan: ${feat.unit}`;
+      document.getElementById('feature-trend-text').textContent = feat.trend;
+
+      if (datasetFeatureChart) {
+        datasetFeatureChart.data.datasets[0].data = feat.avgByQuality;
+        datasetFeatureChart.data.datasets[0].label = `Rata-rata ${feat.name}`;
+        datasetFeatureChart.update();
+      }
+    }
 
     // File JSON Uploader (From Python pyswarms run)
     document.getElementById('input-file-json').addEventListener('change', (e) => {
